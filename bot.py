@@ -26,11 +26,11 @@ MOSCOW_TZ = pytz.timezone("Europe/Moscow")
 
 # Подрядчики: Notion-название → Telegram username
 CONTRACTORS = {
-    "Постановщики": "@Shapi444",
-    "Мидека":       "@revzis",
-    "А-Про":        "@GusevSVW",
-    "Все для шоу":  "@Slavik07077",
-    "Технический диретор": "@vbotiy",
+    "Пострановшики":        "@shapi444",
+    "Мидека":               "@revzis",
+    "А-про":                "@gusevsvw",
+    "Все для шшоу":         "@slavik07077",
+    "Технический директор": "@vbotiy",
     # Цех — добавить позже
 }
 
@@ -53,7 +53,7 @@ def get_calendar_entry(target_date: date):
     results = notion.databases.query(
         database_id=CALENDAR_DB_ID,
         filter={
-            "property": "Дата",
+            "property": "Date",
             "date": {"equals": iso}
         }
     ).get("results", [])
@@ -67,11 +67,11 @@ def get_schedule(calendar_page_id: str, contractor: str):
         filter={
             "and": [
                 {
-                    "property": "Подрядчик",
+                    "property": "подрядчики",
                     "select": {"equals": contractor}
                 },
                 {
-                    "property": "День",
+                    "property": "Данные календаря",
                     "relation": {"contains": calendar_page_id}
                 }
             ]
@@ -98,12 +98,14 @@ def format_schedule(tasks: list) -> str:
     lines = []
     for t in tasks:
         props = t["properties"]
-        title = props.get("Название", {}).get("title", [{}])[0].get("plain_text", "—")
-        start = props.get("Начало", {}).get("rich_text", [{}])[0].get("plain_text", "")
-        end   = props.get("Конец",  {}).get("rich_text", [{}])[0].get("plain_text", "")
+        title = props.get("Наименование", {}).get("title", [{}])[0].get("plain_text", "—")
+        start_date = props.get("время начало", {}).get("date", {})
+        end_date   = props.get("Время конец", {}).get("date", {})
+        start = start_date.get("start", "")[-5:] if start_date and start_date.get("start") else ""
+        end   = end_date.get("start", "")[-5:]   if end_date   and end_date.get("start")   else ""
         prio  = props.get("Приоритет", {}).get("select", {})
         prio_name = prio.get("name", "") if prio else ""
-        prio_icon = "⚠️" if prio_name == "важно" else "•"
+        prio_icon = "⚠️" if "важно" in prio_name.lower() or "критично" in prio_name.lower() else "•"
         time_str = f"{start}–{end} " if start else ""
         lines.append(f"  {prio_icon} {time_str}{title}")
     return "\n".join(lines)
@@ -128,7 +130,7 @@ def build_morning_message(contractor: str, today: date, tomorrow: date) -> str:
     # Сегодня
     if today_entry:
         pid_today   = today_entry["id"]
-        day_type    = today_entry["properties"].get("Тип дня", {}).get("select", {})
+        day_type    = today_entry["properties"].get("Select", {}).get("select", {})
         day_type_name = day_type.get("name", "") if day_type else ""
         tasks_today = get_schedule(pid_today, contractor)
         mats_today  = get_materials(pid_today)
@@ -143,7 +145,7 @@ def build_morning_message(contractor: str, today: date, tomorrow: date) -> str:
     # Завтра
     if tomorrow_entry:
         pid_tomorrow   = tomorrow_entry["id"]
-        day_type2      = tomorrow_entry["properties"].get("Тип дня", {}).get("select", {})
+        day_type2      = tomorrow_entry["properties"].get("Select", {}).get("select", {})
         day_type_name2 = day_type2.get("name", "") if day_type2 else ""
         tasks_tomorrow = get_schedule(pid_tomorrow, contractor)
         tomorrow_block = (
