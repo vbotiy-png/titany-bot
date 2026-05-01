@@ -193,8 +193,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username
     chat_id  = update.effective_chat.id
     if username:
-        USER_CHAT_IDS[f"@{username}"] = chat_id
-        logger.info(f"Registered @{username} → {chat_id}")
+        USER_CHAT_IDS[f"@{username.lower()}"] = chat_id
+        logger.info(f"Registered @{username.lower()} → {chat_id}")
 
     await update.message.reply_text(
         "👋 Привет! Я бот проекта *Титаны*.\n\n"
@@ -208,8 +208,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def today_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    username = f"@{update.effective_user.username}"
-    contractor = next((k for k, v in CONTRACTORS.items() if v == username), None)
+    username = f"@{update.effective_user.username.lower()}"
+    contractor = next((k for k, v in CONTRACTORS.items() if v.lower() == username), None)
     if not contractor:
         await update.message.reply_text("❌ Ты не зарегистрирован в проекте.")
         return
@@ -265,8 +265,8 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    username   = f"@{update.effective_user.username}"
-    contractor = next((k for k, v in CONTRACTORS.items() if v == username), "Неизвестно")
+    username   = f"@{update.effective_user.username.lower()}"
+    contractor = next((k for k, v in CONTRACTORS.items() if v.lower() == username), "Неизвестно")
     text       = update.message.text
     today      = datetime.now(MOSCOW_TZ).date()
 
