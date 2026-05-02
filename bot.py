@@ -213,7 +213,12 @@ async def today_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = f"@{update.effective_user.username.lower()}"
     contractor = next((k for k, v in CONTRACTORS.items() if v.lower() == username), None)
     if not contractor:
-        await update.message.reply_text("❌ Ты не зарегистрирован в проекте.")
+        await update.message.reply_text(
+            f"❌ Не найден в проекте\.\n"
+            f"Твой username: `{username}`\n"
+            f"Зарегистрированы: {', '.join(CONTRACTORS.values())}",
+            parse_mode="MarkdownV2"
+        )
         return
 
     now      = datetime.now(MOSCOW_TZ)
